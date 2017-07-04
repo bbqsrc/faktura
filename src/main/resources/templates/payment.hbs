@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>Invoice Payment</title>
+        <style>
+            .container {
+                font-family: "Noto Sans", "Open Sans", sans-serif;
+                margin: 0 auto;
+                max-width: 920px;
+                max-width: 40rem;
+                padding: 4rem;
+            }
+
+            .identifier {
+                font-size: 0.65rem;
+            }
+
+            .identifier > code {
+                font-family: "Menlo", "Monaco", "Lucida Console", "Consolas", monospace;
+            }
+
+            h1 {
+                font-size: 1.8rem;
+            }
+
+            h2 {
+                font-size: 1.6rem;
+            }
+
+            .totals {
+                padding-left: 0.5rem;
+                border-left: 3px solid #0073ae;
+                margin: 2rem 0;
+            }
+
+            .totals-label {
+                font-size: 90%;
+            }
+
+            .totals-breakdown {
+                font-size: 90%;
+            }
+
+            @media (max-width: 600px) {
+                .container {
+                    padding: 12px;
+                }
+            }
+
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <header>
+                <h1>Invoice Payment</h1>
+            </header>
+
+            <main class="totals">
+                <p class="totals-breakdown">
+                    <span class="totals-label">Invoice total:</span>
+                    <br>
+                    <strong>{{currency}} {{amount}}</strong>
+                </p>
+                <p class="totals-breakdown">
+                    <span class="totals-label">Transaction fee:</span>
+                    <br>
+                    <strong>{{currency}} {{fee}}</strong> <small>(2.9% + 30c)</small>
+                </p>
+                <p>
+                    <span class="totals-label">Total payable:</span>
+                    <br>
+                    <strong>{{currency}} {{totalPayable}}</strong>
+                </p>
+
+                <form action="/invoice/{{uuid}}" method="POST">
+                    <script src="https://checkout.stripe.com/checkout.js" class="stripe-button"
+                            data-key="{{provider.stripePublishableKey}}"
+                            data-amount="{{stripeTotal}}"
+                            data-name="{{provider.name}}"
+                            data-description="Invoice for {{currency}} {{amount}} plus fees"
+                            {{#if provider.imageUrl}}
+                            data-image="{{provider.imageUrl}}"
+                            {{/if}}
+                            data-locale="auto"
+                            data-zip-code="true"
+                            data-currency="{{currency}}">
+                    </script>
+                </form>
+            </main>
+
+            <footer>
+                <aside class="identifier">Identifier: <code>{{uuid}}</code></aside>
+            </footer>
+        </div>
+    </body>
+</html>
