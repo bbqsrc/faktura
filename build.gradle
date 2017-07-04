@@ -33,5 +33,6 @@ dependencies {
     compile "com.stripe:stripe-java:5.6.0"
     compile group: 'com.natpryce', name: 'konfig', version: '1.6.1.0'
 
-    compile group: 'com.h2database', name: 'h2', version: '1.4.196'
+    compile group: 'org.postgresql', name: 'postgresql', version: '42.1.1'
+    compile 'com.zaxxer:HikariCP:2.6.2'
 }
