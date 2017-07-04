@@ -1,7 +1,9 @@
+import com.github.jhonnymertz.wkhtmltopdf.wrapper.Pdf
 import com.stripe.model.Charge
 import com.stripe.net.RequestOptions
 import domain.Invoice
 import domain.Receipt
+import handlebars.HandlebarsEngine
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.transactions.transaction
 import spark.kotlin.Http
@@ -40,7 +42,7 @@ internal fun uuidFromString(string: String): UUID? {
     }
 }
 
-internal fun Invoice.toTemplateMap(): Map<Any, Any> {
+internal fun Invoice.toStripeModel(): Map<Any, Any> {
     val fee = calculateStripeFee(total)
     val stripeTotal = generateStripeTotal(total + fee)
 
@@ -59,6 +61,28 @@ internal fun Invoice.toTemplateMap(): Map<Any, Any> {
 fun initRoutes(pool: DataSource): Http {
     val http = ignite()
 
+    http.get("/invoice/:uuid/pdf") {
+        val uuid = uuidFromString(request.params(":uuid")) ?: throw halt(400)
+
+        Database.connect(pool)
+
+        transaction {
+            val invoice = Invoice.findByUuid(uuid) ?: throw halt(404)
+            val model = mapOf<Any, Any>(
+                    "invoice" to invoice,
+                    "client" to invoice.client,
+                    "provider" to invoice.provider
+            )
+
+            val html = hbs.render(model, "invoice")
+
+            response.type("application/pdf")
+            val pdf = Pdf()
+            pdf.addPageFromString(html)
+            pdf.pdf
+        }
+    }
+
     http.get("/invoice/:uuid") {
         val uuid = uuidFromString(request.params(":uuid")) ?: throw halt(400)
 
@@ -68,14 +92,35 @@ fun initRoutes(pool: DataSource): Http {
             val invoice = Invoice.findByUuid(uuid) ?: throw halt(404)
 
             if (invoice.receipt == null) {
-                hbs.render(invoice.toTemplateMap(), "payment")
+                val model = mapOf<Any, Any>(
+                        "invoice" to invoice,
+                        "client" to invoice.client,
+                        "provider" to invoice.provider
+                )
+                hbs.render(model, "invoice")
             } else {
                 "This invoice has already been paid."
             }
         }
     }
 
-    http.post("/invoice/:uuid") {
+    http.get("/payment/:uuid") {
+        val uuid = uuidFromString(request.params(":uuid")) ?: throw halt(400)
+
+        Database.connect(pool)
+
+        transaction {
+            val invoice = Invoice.findByUuid(uuid) ?: throw halt(404)
+
+            if (invoice.receipt == null) {
+                hbs.render(invoice.toStripeModel(), "payment")
+            } else {
+                "This invoice has already been paid."
+            }
+        }
+    }
+
+    http.post("/payment/:uuid") {
         val uuid = uuidFromString(request.params(":uuid")) ?: throw halt(400)
 
         val stripeToken = request.queryParams("stripeToken") ?: throw halt(400)

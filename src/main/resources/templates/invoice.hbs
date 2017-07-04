@@ -1,0 +1,220 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Tax Invoice &mdash; {{formatDate invoice.issuedDate "long"}}</title>
+    <link href='https://fonts.googleapis.com/css?family=Noto+Sans:400,400italic,700' rel='stylesheet' type='text/css'>
+    <style>
+        body { font-family: 'Noto Sans', sans-serif; }
+        header, main, footer { display: block; }
+        time { display: inline; }
+        .pull-left { float: left; display: inline-block; }
+        .pull-right { float: right; display: inline-block; }
+        .text-right { text-align: right; }
+        .container {
+            max-width: 48em;
+            margin: 0 auto;
+        }
+        table.invoice-items {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5em 0;
+            font-size: 90%;
+        }
+        .invoice-items th {
+            white-space: nowrap;
+        }
+        .invoice-items td {
+            border-top: 1px solid #ddd;
+            padding: 0.5em;
+            text-align: right;
+        }
+        .invoice-items th {
+            padding: 0.5em;
+        }
+
+        .invoice-items td:nth-child(1) {
+            width: 1px;
+        }
+
+        .invoice-items td:nth-child(2) {
+            text-align: left;
+            width: 100%;
+        }
+
+        .advice {
+            padding: 1em;
+            margin: 1.5em;
+            border: 1px solid #bbb;
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            margin: 0;
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            margin-bottom: 0.25rem;
+        }
+
+        h2 {
+            font-size: 1.4rem;
+            margin-bottom: 0.25rem;
+        }
+
+        h3 {
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .client { margin-top: 1em; }
+        p { margin: 0; }
+
+        a { color: #0073ae; }
+
+        .payment-method {
+            padding-left: 0.5rem;
+            border-left: 3px solid #0073ae;
+            margin: 1rem 0;
+        }
+
+        .number-box {
+            border: 1px solid #bbb;
+            display: inline-block;
+            width: 8em;
+            margin: .3em 0 0 .3em;
+            padding: .15em;
+        }
+
+        .provider .pull-left {
+            width: 50%;
+        }
+
+        .remarks {
+            text-align: center;
+            margin-top: 2em;
+        }
+    </style>
+</head>
+<body>
+<header class='container'>
+    <h1>Tax Invoice</h1>
+
+    <div class="provider">
+        <div class="pull-left">
+            <div>{{provider.name}}</div>
+            <div>ABN: {{provider.businessNumber}}</div>
+        </div>
+
+        <div class="pull-right text-right">
+            <div>{{markdown provider.details}}</div>
+            <div class="provider-contacts">
+                {{#each provider.contacts}}
+                    <div>
+                        {{value}}
+                    </div>
+                {{/each}}
+            </div>
+        </div>
+    </div>
+
+    <div style='clear:both'></div>
+
+    <div class="issue-date">
+        <strong>Date: </strong>
+        <time>{{formatDate invoice.issuedDate "long"}}</time>
+    </div>
+
+    <div class="client">
+        <strong class='pull-left'>To:</strong>
+        <div style='padding-left: 2em'>
+            {{client.name}}
+            {{markdown client.details}}
+            {{#if client.businessNumber}}
+                {{markdown client.businessNumber}}
+            {{/if}}
+        </div>
+    </div>
+</header>
+
+<main class='container'>
+    <table class="invoice-items">
+        <thead>
+        <tr>
+            <th>Qty/Hours</th>
+            <th>Description</th>
+            <th>Unit Price</th>
+            {{#if invoice.hasTax}}
+                <th>GST</th>
+            {{/if}}
+            <th>Total</th>
+        </tr>
+        </thead>
+        <tbody>
+        {{#each invoice.items}}
+            <tr>
+                <td>{{formatNumber quantity}} &times;</td>
+                <td>{{item}}</td>
+                <td>{{formatNumber price style="currency" currency=../invoice.currency}}</td>
+                {{#if ../invoice.hasTax}}
+                    <td>{{formatNumber totalTax style="currency" currency=../invoice.currency}}</td>
+                {{/if}}
+                <td>{{formatNumber total style="currency" currency=../invoice.currency}}</td>
+            </tr>
+        {{/each}}
+        </tbody>
+    </table>
+
+    {{#if invoice.advice}}
+        <div class="advice">
+            {{markdown invoice.advice}}
+        </div>
+    {{/if}}
+</main>
+
+<footer class='container'>
+    <div class="pull-left">
+        <h2>Payment Options</h2>
+
+        {{#each invoice.paymentMethods}}
+            <div class="payment-method">
+                <h3>{{title}}</h3>
+                {{#ifEquals name "Stripe"}}
+                <div>{{stripe ../invoice}}</div>
+                {{else}}
+                <div>{{markdown details}}</div>
+                {{/ifEquals}}
+            </div>
+        {{/each}}
+    </div>
+
+    <div class="pull-right">
+        <div class="totals text-right">
+            {{#if invoice.amountPaid}}
+                <div>
+                    <strong>Amount paid: </strong>
+                    <span class="number-box">{{formatNumber invoice.amountPaid style="currency" currency=invoice.currency}}</span>
+                </div>
+            {{/if}}
+
+            <div>
+                Total payable{{#if invoice.hasTax}} <small>(incl GST)</small>{{/if}}:
+                <strong class="number-box">{{formatNumber invoice.total style="currency" currency=invoice.currency}}</strong>
+            </div>
+
+            <div>
+                Payment due:
+                <strong class="number-box">{{formatDate invoice.dueDate "long"}}</strong>
+            </div>
+
+        </div>
+    </div>
+
+    <div style='clear:both'></div>
+
+    {{#if remarks}}
+        <p class="remarks"><em>{{remarks}}</em></p>
+    {{/if}}
+</footer>
+</body>
+</html>

@@ -43,21 +43,14 @@ class Client(id: EntityID<Int>) : IntEntity(id) {
     )
 }
 
-class PaymentMethod(id: EntityID<Int>) : IntEntity(id) {
-    companion object : IntEntityClass<PaymentMethod>(PaymentMethods)
-
-    var name by PaymentMethods.name
-    var title by PaymentMethods.title
-    var details by PaymentMethods.details
-}
-
 class Provider(id: EntityID<Int>) : IntEntity(id) {
     companion object : IntEntityClass<Provider>(Providers)
 
     var name by Providers.name
     var details by Providers.details
     var businessNumber by Providers.businessNumber
-    // var paymentMethods by PaymentMethod referencedOn Providers.paymentMethods
+    val contacts by ProviderContact referrersOn Contacts.parent
+    val paymentMethods by ProviderPaymentMethod referrersOn PaymentMethods.parent
     var imageUrl by Providers.imageUrl
     var stripePublishableKey by Providers.stripePublishableKey
     var stripeSecretKey by Providers.stripeSecretKey
@@ -66,6 +59,33 @@ class Provider(id: EntityID<Int>) : IntEntity(id) {
             "name" to name,
             "details" to details
     )
+}
+
+class ProviderPaymentMethod(id: EntityID<Int>) : IntEntity(id) {
+    companion object : IntEntityClass<ProviderPaymentMethod>(PaymentMethods)
+
+    var name by PaymentMethods.name
+    var title by PaymentMethods.title
+    var details by PaymentMethods.details
+    var parent by Provider referencedOn PaymentMethods.parent
+
+    fun isStripe() = if (name == "Stripe") { name } else { null }
+    val foo: String get() = "YEAH ${name} ${isStripe()}"
+}
+
+class InvoicePaymentMethod(id: EntityID<Int>) : IntEntity(id) {
+    companion object : IntEntityClass<InvoicePaymentMethod>(InvoicePaymentMethods)
+
+    var method by ProviderPaymentMethod referencedOn InvoicePaymentMethods.method
+    var invoice by Invoice referencedOn InvoicePaymentMethods.invoice
+}
+
+class ProviderContact(id: EntityID<Int>) : IntEntity(id) {
+    companion object : IntEntityClass<ProviderContact>(Contacts)
+
+    var type by Contacts.type
+    var value by Contacts.value
+    var parent by Provider referencedOn Contacts.parent
 }
 
 class InvoiceItem(id: EntityID<Int>) : IntEntity(id) {
@@ -102,10 +122,21 @@ class Invoice(id: EntityID<Int>) : IntEntity(id) {
     var currency by Invoices.currency
     val items by InvoiceItem referrersOn InvoiceItems.parent
     var receipt by Receipt optionalReferencedOn Invoices.receipt
+    val paymentMethods by ProviderPaymentMethod via InvoicePaymentMethods
+
+    var issuedDate by Invoices.issuedDate
+    var dueDate by Invoices.dueDate
+    var reference by Invoices.reference
+    var advice by Invoices.advice
+    var remarks by Invoices.remarks
 
     val total: BigDecimal get() = items
             .map { it.total }
             .reduce { acc, x -> acc + x }
+
+    val hasTax: Boolean get() = items
+            .map { it.totalTax }
+            .reduce { a, b -> a + b } > BigDecimal.ZERO
 
     fun toJson(): JsonObject = jsonObject(
             "uuid" to uuid.toString(),

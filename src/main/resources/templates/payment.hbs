@@ -54,7 +54,7 @@
     <body>
         <div class="container">
             <header>
-                <h1>Invoice Payment</h1>
+                <h1>Pay by Credit/Debit Card</h1>
             </header>
 
             <main class="totals">
@@ -74,7 +74,7 @@
                     <strong>{{currency}} {{totalPayable}}</strong>
                 </p>
 
-                <form action="/invoice/{{uuid}}" method="POST">
+                <form action="/payment/{{uuid}}" method="POST">
                     <script src="https://checkout.stripe.com/checkout.js" class="stripe-button"
                             data-key="{{provider.stripePublishableKey}}"
                             data-amount="{{stripeTotal}}"

@@ -20,11 +20,11 @@ object Clients : IntIdTable("clients") {
     val businessNumber = text("business_number").nullable()
 }
 
-object PaymentMethods : IntIdTable("client_payment_methods") {
+object PaymentMethods : IntIdTable("provider_payment_methods") {
     val name = varchar("name", 255)
     val title = text("title")
     val details = text("details")
-    val parent = reference("client_id", Clients)
+    val parent = reference("provider_id", Providers)
 }
 
 object InvoicePaymentMethods : IntIdTable("invoice_payment_methods") {
@@ -40,8 +40,8 @@ object Contacts : IntIdTable("provider_contacts") {
 
 object Providers : IntIdTable("providers") {
     val name = varchar("name", 255).index()
-    val details = text("details")
-    val businessNumber = text("businessNumber")
+    val details = text("details").nullable()
+    val businessNumber = text("business_number")
     val imageUrl = text("image_url").nullable()
     val stripePublishableKey = text("stripe_publishable_key").nullable()
     val stripeSecretKey = text("stripe_secret_key").nullable()
