@@ -3,7 +3,6 @@ import com.stripe.net.RequestOptions
 import domain.Invoice
 import domain.Receipt
 import org.jetbrains.exposed.sql.Database
-import org.jetbrains.exposed.sql.StdOutSqlLogger
 import org.jetbrains.exposed.sql.transactions.transaction
 import spark.kotlin.Http
 import spark.kotlin.halt
@@ -112,7 +111,6 @@ fun initRoutes(pool: DataSource): Http {
 
         if (result.status == "succeeded") {
             transaction {
-                logger.addLogger(StdOutSqlLogger)
                 var receipt = Receipt.withStripe(result)
                 invoice.receipt = receipt
                 invoice.flush()
